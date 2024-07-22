@@ -12,8 +12,9 @@
 def startTime = now();
 def returnMessageTemp = ''
 def recordsToParse = 7500 //variable to determine how many records to run against.
-def today = now() + 1//new Date()
-def timeframeStart = today - 730
+def todayVar = today()//new Date()
+def evaluationDate = today() -1 //new Date()
+def timeframeStart = todayVar - 730
 /* Step 1 - Grab the data from the Lead Territory Assigment object. This will be used to create the indexed lists */
   def voLTA = newView('LeadTerritoryAssignment_c')
   def vcLTA = voLTA.createViewCriteria()
@@ -123,48 +124,27 @@ def vc = newViewCriteria(vo)
 
 //vcr1 = needs to be updated + not cancelled + has a post code + within 2 years since JobEndDate
 def vcr1 = vc.createRow()
-def vci1_1 = vcr1.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
-vci1_1.setOperator('BEFORE')
-vci1_1.setValue(today);
-
 def vci1_2 = vcr1.ensureCriteriaItem('JobStatus_c')
 vci1_2.setOperator('<>')
 vci1_2.setValue('Cancelled');
-
-// def vci1_3 = vcr1.ensureCriteriaItem('PostalCode_c')
-// vci1_3.setOperator('ISNOTBLANK')
 def vci1_3 = vcr1.ensureCriteriaItem('PostalCode_c')
-vci1_3.setOperator('=')
-vci1_3.setValue('65067');
-
-
+vci1_3.setOperator('ISNOTBLANK')
 def vci1_4 = vcr1.ensureCriteriaItem('CreationDate')
 vci1_4.setOperator('AFTER')
 vci1_4.setValue(timeframeStart); //easy way to remove 2 years (365*2)
 
 //insert this criteria row (vcr1)
+vcr1.setConjunction(1); //AND
 vc.insertRow(vcr1);
 
-//vcr2 = never been updated + not cancelled + has a post code + within 2 years since JobEndDate
 def vcr2 = vc.createRow();
 def vci2_1 = vcr2.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
-vci2_1.setOperator('ISBLANK')
-
-def vci2_2 = vcr2.ensureCriteriaItem('JobStatus_c')
-vci2_2.setOperator('<>')
-vci2_2.setValue('Cancelled');
-
-
-// def vci2_3 = vcr2.ensureCriteriaItem('PostalCode_c')
-// vci2_3.setOperator('ISNOTBLANK')
-
-def vci2_3 = vcr2.ensureCriteriaItem('PostalCode_c')
-vci2_3.setOperator('=')
-vci2_3.setValue('65067');
-
-def vci2_4 = vcr2.ensureCriteriaItem('CreationDate')
-vci2_4.setOperator('AFTER')
-vci2_4.setValue(timeframeStart); //easy way to remove 2 years (365*2)
+vci2_1.setOperator('BEFORE')
+vci2_1.setValue(evaluationDate);
+vci2_1.setConjunction(0);
+def vci2_2 = vcr2.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
+vci2_2.setOperator('ISBLANK')
+vci2_2.setConjunction(0);
 vc.insertRow(vcr2);
 
 vo.appendViewCriteria(vc);
@@ -193,86 +173,81 @@ while (vo.hasNext()){
             switch(zipLeadingChar) {
                 case '0': 
                     index = array0Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found. 
+                    if(index > -1){
                     territoryId = array0Val[index];
                     }
                     break
                 case '1':   
                     index = array1Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array1Val[index];
                     }
                     break
                 case '2': 
                     index = array2Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array2Val[index];
                         }
                     break
                 case '3': 
                     index = array3Key.indexOf(postCode)
-                    println(index)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array3Val[index];
                         }
                     break
                 case '4': 
                       index = array4Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array4Val[index];
                                           }
                     break
                 case '5': 
                     index = array5Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array5Val[index];
                         }
                     break
                 case '6': 
                     index = array6Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array6Val[index];
                         }
                     break
                 case '7': 
                     index = array7Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array7Val[index];
                         }
                     break
                 case '8': 
                     index = array8Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array8Val[index];
                         }
                     break
                 case '9': 
                     index = array9Key.indexOf(postCode)
-                    if(index > -1){ //2024.07.16|INC0032394 - Added because the index, if not found, can actually be returned as -1 instead of null. We ONLY want to leverage it if one is actually found.
+                    if(index > -1){
                     territoryId = array9Val[index];
                         }
                     break
                 default: 
                     break 
             }
-                returnMessageTemp = returnMessageTemp + "zipLeadingChar is " + zipLeadingChar;
         }
         if(rowSR.SalesTerritory_Id_c != territoryId) {
             rowSR.setAttribute('SalesTerritory_Id_c',territoryId)
         }
     }
     territoryId ? recordsSuccessful++ : recordsSkipped++ //ternary to update the counts for logging
-    returnMessageTemp = returnMessageTemp + ", territory value for " + postCode + " is " + territoryId     
-    //rowSR.setAttribute('LastSalesTerritoryAssignedDate_c', today) //Commented out for debugging - we don't want to clear out our records that are being used while testing. 
-    returnMessageTemp = returnMessageTemp + "index " + index;
-
+    rowSR.setAttribute('LastSalesTerritoryAssignedDate_c', todayVar) //Commented out for debugging - we don't want to clear out our records that are being used while testing. 
 }
 
 def endTime = now();
 long diffInMills = endTime.getTime() - startTime.getTime(); //This is potentially inaccurate, but it gives an idea. 
 def processCounterDenom = 1; //added to support calculating the time spent running, which to avoid a div by zero instance, needs to be a separate variable than the recordsProcessed var
-if(recordsProcessed > 0){
+if (recordsProcessed > 0){
     processCounterDenom = recordsProcessed;
 } 
 def durationEach = (diffInMills / processCounterDenom) / 1000
-return "Duration of runtime: "     + diffInMills / 1000  + ", records processed: " + recordsProcessed + ", records successful: " + recordsSuccessful + ", records skipped: " + recordsSkipped + " Average run time: " + durationEach + " " + returnMessageTemp + "today is " + today
+return "Duration of runtime: "     + diffInMills / 1000  + ", records processed: " + recordsProcessed + ", records successful: " + recordsSuccessful + ", records skipped: " + recordsSkipped + " Average run time: " + durationEach + " " + returnMessageTemp + "today is " + todayVar

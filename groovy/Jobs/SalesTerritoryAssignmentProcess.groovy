@@ -12,8 +12,9 @@
 def startTime = now();
 def returnMessageTemp = ''
 def recordsToParse = 7500 //variable to determine how many records to run against.
-def today = now()//new Date()
-def timeframeStart = today - 730
+def todayVar = today()//new Date()
+def evaluationDate = today() -1 //-1 to support the process running over two days, for instance if it runs over midnight. Basically we want all jobs from today (maybe tomorrow) that are before when we initially kicked off the process.
+def timeframeStart = todayVar - 730
 /* Step 1 - Grab the data from the Lead Territory Assigment object. This will be used to create the indexed lists */
   def voLTA = newView('LeadTerritoryAssignment_c')
   def vcLTA = voLTA.createViewCriteria()
@@ -123,40 +124,27 @@ def vc = newViewCriteria(vo)
 
 //vcr1 = needs to be updated + not cancelled + has a post code + within 2 years since JobEndDate
 def vcr1 = vc.createRow()
-def vci1_1 = vcr1.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
-vci1_1.setOperator('BEFORE')
-vci1_1.setValue(today);
-
 def vci1_2 = vcr1.ensureCriteriaItem('JobStatus_c')
 vci1_2.setOperator('<>')
 vci1_2.setValue('Cancelled');
-
 def vci1_3 = vcr1.ensureCriteriaItem('PostalCode_c')
 vci1_3.setOperator('ISNOTBLANK')
-
 def vci1_4 = vcr1.ensureCriteriaItem('CreationDate')
 vci1_4.setOperator('AFTER')
 vci1_4.setValue(timeframeStart); //easy way to remove 2 years (365*2)
 
 //insert this criteria row (vcr1)
+vcr1.setConjunction(1); //AND
 vc.insertRow(vcr1);
 
-//vcr2 = never been updated + not cancelled + has a post code + within 2 years since JobEndDate
 def vcr2 = vc.createRow();
 def vci2_1 = vcr2.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
-vci2_1.setOperator('ISBLANK')
-
-def vci2_2 = vcr2.ensureCriteriaItem('JobStatus_c')
-vci2_2.setOperator('<>')
-vci2_2.setValue('Cancelled');
-
-
-def vci2_3 = vcr2.ensureCriteriaItem('PostalCode_c')
-vci2_3.setOperator('ISNOTBLANK')
-
-def vci2_4 = vcr2.ensureCriteriaItem('CreationDate')
-vci2_4.setOperator('AFTER')
-vci2_4.setValue(timeframeStart); //easy way to remove 2 years (365*2)
+vci2_1.setOperator('BEFORE')
+vci2_1.setValue(evaluationDate);
+vci2_1.setConjunction(0);
+def vci2_2 = vcr2.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
+vci2_2.setOperator('ISBLANK')
+vci2_2.setConjunction(0);
 vc.insertRow(vcr2);
 
 vo.appendViewCriteria(vc);
@@ -252,8 +240,7 @@ while (vo.hasNext()){
         }
     }
     territoryId ? recordsSuccessful++ : recordsSkipped++ //ternary to update the counts for logging
-    //returnMessageTemp = returnMessageTemp + ", territory value for " + postCode + " is " + territoryId     
-    rowSR.setAttribute('LastSalesTerritoryAssignedDate_c', today) //Commented out for debugging - we don't want to clear out our records that are being used while testing. 
+    rowSR.setAttribute('LastSalesTerritoryAssignedDate_c', todayVar) //Commented out for debugging - we don't want to clear out our records that are being used while testing. 
 }
 
 def endTime = now();
@@ -263,4 +250,4 @@ if (recordsProcessed > 0){
     processCounterDenom = recordsProcessed;
 } 
 def durationEach = (diffInMills / processCounterDenom) / 1000
-return "Duration of runtime: "     + diffInMills / 1000  + ", records processed: " + recordsProcessed + ", records successful: " + recordsSuccessful + ", records skipped: " + recordsSkipped + " Average run time: " + durationEach + " " + returnMessageTemp + "today is " + today
+return "Duration of runtime: "     + diffInMills / 1000  + ", records processed: " + recordsProcessed + ", records successful: " + recordsSuccessful + ", records skipped: " + recordsSkipped + " Average run time: " + durationEach + " " + returnMessageTemp + "today is " + todayVar
