@@ -56,11 +56,11 @@ def timeframeStart = todayVar - 730
     def arrayIndex = '';
     def key = '';
     def val = 0.0;
-    if (row.Country_c == 'United States') {
+    if (row.Zip_c != null && row.FSA_c == null) {
         arrayIndex = left(row?.Zip_c, 1) //Need to take the first digit of the postal code, and use that to determine the array/list to utilize. 
         key = row?.Zip_c
         val = row?.Territory_Id_c
-    } else {
+    } else if (row.FSA_c != null && row.Zip_c == null) { //2024.07.22| Updated to just look for ones that have values basically
         arrayIndex = 'CAN'
         key = row?.FSA_c
         val = row?.Territory_Id_c
