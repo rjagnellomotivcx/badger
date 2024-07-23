@@ -56,11 +56,11 @@ def timeframeStart = todayVar - 730
     def arrayIndex = '';
     def key = '';
     def val = 0.0;
-    if (row.Zip_c != null && row.FSA_c == null) {
+    if (row.Zip_c != null) {
         arrayIndex = left(row?.Zip_c, 1) //Need to take the first digit of the postal code, and use that to determine the array/list to utilize. 
         key = row?.Zip_c
         val = row?.Territory_Id_c
-    } else if (row.FSA_c != null && row.Zip_c == null) { //2024.07.22| Updated to just look for ones that have values basically
+    } else if (row.FSA_c != null){ //2024.07.22| Updated to just look for ones that have values basically
         arrayIndex = 'CAN'
         key = row?.FSA_c
         val = row?.Territory_Id_c
@@ -124,27 +124,39 @@ def vc = newViewCriteria(vo)
 
 //vcr1 = needs to be updated + not cancelled + has a post code + within 2 years since JobEndDate
 def vcr1 = vc.createRow()
+def vci1_1 = vcr1.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
+vci1_1.setOperator('BEFORE')
+vci1_1.setValue(evaluationDate);
+
 def vci1_2 = vcr1.ensureCriteriaItem('JobStatus_c')
 vci1_2.setOperator('<>')
 vci1_2.setValue('Cancelled');
+
 def vci1_3 = vcr1.ensureCriteriaItem('PostalCode_c')
 vci1_3.setOperator('ISNOTBLANK')
+
 def vci1_4 = vcr1.ensureCriteriaItem('CreationDate')
 vci1_4.setOperator('AFTER')
 vci1_4.setValue(timeframeStart); //easy way to remove 2 years (365*2)
 
 //insert this criteria row (vcr1)
-vcr1.setConjunction(1); //AND
 vc.insertRow(vcr1);
 
+//vcr2 = never been updated + not cancelled + has a post code + within 2 years since JobEndDate
 def vcr2 = vc.createRow();
 def vci2_1 = vcr2.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
-vci2_1.setOperator('BEFORE')
-vci2_1.setValue(evaluationDate);
-vci2_1.setConjunction(0);
-def vci2_2 = vcr2.ensureCriteriaItem('LastSalesTerritoryAssignedDate_c')
-vci2_2.setOperator('ISBLANK')
-vci2_2.setConjunction(0);
+vci2_1.setOperator('ISBLANK')
+
+def vci2_2 = vcr2.ensureCriteriaItem('JobStatus_c')
+vci2_2.setOperator('<>')
+vci2_2.setValue('Cancelled');
+
+def vci2_3 = vcr2.ensureCriteriaItem('PostalCode_c')
+vci2_3.setOperator('ISNOTBLANK')
+
+def vci2_4 = vcr2.ensureCriteriaItem('CreationDate')
+vci2_4.setOperator('AFTER')
+vci2_4.setValue(timeframeStart); //easy way to remove 2 years (365*2)
 vc.insertRow(vcr2);
 
 vo.appendViewCriteria(vc);
@@ -159,8 +171,8 @@ while (vo.hasNext()){
     def postCode = rowSR.PostalCode_c
     def territoryId = null;
     def index = null;
+    recordsProcessed++;
     if(postCode != null){
-        recordsProcessed++;
         if (length(postCode) == 7){ //denotes Canadian postal
             postCode = left(postCode,3) //transform to FSA
             index = arrayCanKey.indexOf(postCode)
